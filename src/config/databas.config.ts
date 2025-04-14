@@ -7,13 +7,12 @@ export const dataBaseConfig: Record<string, any> = {
   type: env.DB_TYPE,
   host: env.DB_HOST,
   port: parseInt(env.DB_PORT || '3306', 10),
-  username: env.DB_USRENAME,
+  username: env.DB_USERNAME,
   password: env.DB_PASSWORD,
   database: env.DB_DATABASE,
   synchronize: true,
-  entities: ['dist/**/**/enities/*.entity{.ts,.js}'],
+  entities: ['dist/**/**/entities/*.entity{.ts,.js}'],
   migrations: ['dist/config/migrations/*{.ts,.js}'],
 };
-console.log("dataBaseConfig",dataBaseConfig);
 
-export const  dataSource = new DataSource(dataBaseConfig as DataSourceOptions);
+export const dataSource = new DataSource(dataBaseConfig as DataSourceOptions);

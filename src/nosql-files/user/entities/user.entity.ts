@@ -6,10 +6,10 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ length: 30, unique: true })
+    @Column({ length: 30 })
     first_name: string;
 
-    @Column({ length: 30, unique: true })
+    @Column({ length: 30 })s
     last_name: string;
 
     @Column({ length: 30, unique: true })
@@ -23,6 +23,9 @@ export class User {
 
     @Column({ nullable: false })
     password: string;
+
+    @Column({ unique: true })
+    code: string;
 
     @CreateDateColumn()
     createdAt: Date;
