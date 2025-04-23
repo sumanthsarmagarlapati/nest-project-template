@@ -6,7 +6,8 @@ import { AppService } from './app.service';
 import { dataBaseConfig } from './config/databas.config';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
-import { FilesModule } from './files/files.module';
+import { SqlModule } from './sql-files/sql-files.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { FilesModule } from './files/files.module';
       inject: [ConfigService]
     }),
     TypeOrmModule.forRoot({ ...dataBaseConfig, autoLoadEntities: true }),
-    FilesModule
+    CommonModule,
+    SqlModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,21 +1,21 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity('user')
-@Unique(['username', "email"])
-export class User {
+@Entity('admin')
+@Index(['username', 'email'], { unique: true })
+export class Admin {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column({ length: 30 })
     first_name: string;
 
-    @Column({ length: 30 })s
+    @Column({ length: 30 })
     last_name: string;
 
-    @Column({ length: 30, unique: true })
+    @Column({ length: 30,unique:true })
     username: string;
 
-    @Column({ length: 100, unique: true })
+    @Column({ length: 100 })
     email: string;
 
     @Column({ length: 10 })

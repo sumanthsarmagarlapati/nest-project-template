@@ -1,5 +1,7 @@
-import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength, IsOptional, IsNumber, Min } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength, IsOptional, IsNumber, Min, IsBoolean } from 'class-validator';
 import { Exclude, Expose, Type } from 'class-transformer';
+import { PartialType } from '@nestjs/mapped-types';
+
 
 // Request DTOs
 export class CreateUserDto {
@@ -50,77 +52,51 @@ export class CreateUserDto {
     @MinLength(8)
     @MaxLength(20)
     password: string;
-}
 
-export class UpdateUserDto extends Partial<CreateUserDto> {}
-
-export class PaginationQueryDto {
-    @IsOptional()
-    @Type(() => Number)
-    @IsNumber()
-    @Min(1)
-    page?: number = 1;
-
-    @IsOptional()
-    @Type(() => Number)
-    @IsNumber()
-    @Min(1)
-    limit?: number = 10;
-
-    @IsOptional()
     @IsString()
-    search?: string;
+    @IsNotEmpty()
+    @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+    })
+    @MinLength(8)
+    @MaxLength(20)
+    confirm_password: string;
 }
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {
 
 @Exclude()
-export class UserResponseDto {
-    @Expose()
-    id: number;
+code:string
 
-    @Expose()
-    first_name: string;
+@Exclude()
+password:string
 
-    @Expose()
-    last_name: string;
+@Exclude()
+confirm_password:string
 
-    @Expose()
-    username: string;
+@IsString()
+@IsOptional()
+@IsNotEmpty()
+@Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+})
+@MinLength(8)
+@MaxLength(20)
+current_password: string;
 
-    @Expose()
-    email: string;
+@IsString()
+@IsOptional()
+@IsNotEmpty()
+@Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+    message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+})
+@MinLength(8)
+@MaxLength(20)
+new_password: string;
 
-    @Expose()
-    mobile: string;
-
-    @Expose()
-    code: string;
-
-    @Expose()
-    createdAt: Date;
-
-    @Expose()
-    updatedAt: Date;
+@IsOptional()
+@IsNotEmpty()
+@IsBoolean()
+active:boolean
 }
 
-export interface ApiResponse<T> {
-    status: number;
-    message: string;
-    data: T | null;
-}
-
-export interface UserApiResponse extends ApiResponse<UserResponseDto> {}
-export interface UsersApiResponse extends ApiResponse<PaginatedUserResponseDto> {}
-export interface DeleteUserResponse extends ApiResponse<{ deleted: boolean }> {}
-
-export class PaginatedUserResponseDto {
-    @Expose()
-    records: UserResponseDto[];
-
-    @Expose()
-    pagination: {
-        total: number;
-        page: number;
-        limit: number;
-        pages: number;
-    };
-}

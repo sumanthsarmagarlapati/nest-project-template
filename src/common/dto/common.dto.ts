@@ -1,5 +1,5 @@
-import { IsOptional, IsNumber, Min, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
 
 export class PaginationQueryDto {
     @IsOptional()
@@ -17,4 +17,12 @@ export class PaginationQueryDto {
     @IsOptional()
     @IsString()
     search?: string;
-} 
+}
+
+export class CommonCodeDto {
+    @IsNotEmpty()
+    @IsString()
+    @MinLength(12)
+    @MaxLength(12)
+    code: string
+}
