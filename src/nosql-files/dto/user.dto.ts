@@ -4,7 +4,7 @@ import { PartialType } from '@nestjs/mapped-types';
 
 
 // Request DTOs
-export class CreateAdminDto {
+export class CreateUserDto {
     @IsString()
     @IsNotEmpty()
     @MinLength(3)
@@ -63,7 +63,7 @@ export class CreateAdminDto {
     confirm_password: string;
 }
 
-export class UpdateAdminDto extends PartialType(CreateAdminDto) {
+export class UpdateUserDto extends PartialType(CreateUserDto) {
 
 @Exclude()
 code:string

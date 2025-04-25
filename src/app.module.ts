@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { SqlModule } from './sql-files/sql-files.module';
 import { CommonModule } from './common/common.module';
+import { NosqlFilesModule } from './nosql-files/nosql-files.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { CommonModule } from './common/common.module';
     }),
     TypeOrmModule.forRoot({ ...dataBaseConfig, autoLoadEntities: true }),
     CommonModule,
-    SqlModule
+    SqlModule,
+    NosqlFilesModule
   ],
   controllers: [AppController],
   providers: [AppService],

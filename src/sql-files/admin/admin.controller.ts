@@ -2,8 +2,8 @@ import { Body, Controller, Get, Headers, Param, Patch, Post } from '@nestjs/comm
 import { CommonCodeDto } from 'src/common/dto/common.dto';
 import { AdminService } from './admin.service';
 import {
-    CreateUserDto,
-    UpdateUserDto
+    CreateAdminDto,
+    UpdateAdminDto
 } from './dto/admin.dto';
 
 @Controller('admin')
@@ -11,7 +11,7 @@ export class AdminController {
     constructor(private readonly adminService: AdminService) { }
 
     @Post()
-    async createUser( @Body() body: CreateUserDto) {
+    async createUser( @Body() body: CreateAdminDto) {
         return this.adminService.createUser( body);
     }
 
@@ -26,7 +26,7 @@ export class AdminController {
     }
 
     @Patch(":code")
-    async updateUser( @Param() param: CommonCodeDto, @Body() body: UpdateUserDto) {
-        return this.adminService.updateUser( param.code, body);
+    async updateUser( @Param() param: CommonCodeDto, @Body() body: UpdateAdminDto) {
+        return this.adminService.updateAdmin( param.code, body);
     }
 }

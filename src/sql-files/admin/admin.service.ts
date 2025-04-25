@@ -1,119 +1,138 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from "bcryptjs";
-import { USER_CODE } from 'src/common/common.codes';
-import { CommonService } from 'src/common/common.service';
+import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
+import { ADMIN_CODE } from '../../common/common.codes';
+import { CommonService } from '../../common/common.service';
+import { LogService } from '../../common/services/logService';
 import { Admin } from './entities/admin.entity';
 
 @Injectable()
 export class AdminService {
+  constructor(
+    @InjectRepository(Admin)
+    private readonly adminRepo: Repository<Admin>,
 
-    constructor(
-        @InjectRepository(Admin)
-        private readonly adminRepo: Repository<Admin>,
+    private readonly commonService: CommonService,
+    private readonly logService: LogService,
+  ) {}
 
-        private commonService: CommonService
-    ) { }
+  async createUser(body: Record<string, any>) {
+    try {
+      const existingUser = await this.adminRepo.findOne({
+        where: { username: body.username },
+      });
 
-    async createUser(body: Record<string, any>) {
-        try {
-            const existingUser = await this.adminRepo.findOne({ where: { username: body.username } });
+      if (existingUser) {
+        return this.logService.errorLog(
+          new BadRequestException('Record with this username or email already exists'),
+          'createAdmin'
+        );
+      }
 
-            if (existingUser) {
-                throw new BadRequestException('Admin with this email or username already exists');
-            }
+      if (body.password !== body.confirm_password) {
+        return this.logService.errorLog(
+          new BadRequestException('Password and confirm password do not match'),
+          'createAdmin'
+        );
+      }
 
-            if (body['password'] !== body['confirm_password']) {
-                throw new BadRequestException("Password and confirm passwords are mismatch")
-            }
+      const saltValues = await bcrypt.genSalt();
+      const hashValue = await bcrypt.hash(body.password, saltValues);
+      body.password = hashValue;
 
-            const saltValues = await bcrypt.genSalt()
-            const hashValue = await bcrypt.hash(body.password, saltValues)
-            body['password'] = hashValue
+      const code = await this.commonService.getCode(this.adminRepo, ADMIN_CODE);
+      body.code = code;
 
-            const code = await this.commonService.getCode(this.adminRepo, USER_CODE);
-            body['code'] = code;
+      await this.adminRepo.insert(body);
 
-            this.adminRepo.insert(body);
-
-            return {
-                status: 201,
-                message: 'Admin created successfully',
-            };
-        } catch (error) {
-            throw new BadRequestException(error);
-        }
+      return {
+        status: 201,
+        message: 'Admin created successfully',
+      };
+    } catch (error) {
+      return this.logService.errorLog(error, 'createAdmin');
     }
+  }
 
-    async getAllUsers() {
-        try {
-            const data = await this.adminRepo.find({})
+  async getAllUsers() {
+    try {
+      const data = await this.adminRepo.find({
+        select: {
+          password: false,
+        },
+      });
 
-            return {
-                status: 200,
-                message: 'Users retrieved successfully',
-                data: data
-            };
-        } catch (error) {
-            throw new BadRequestException(error);
-        }
+      return {
+        status: 200,
+        message: 'Admins retrieved successfully',
+        data: data,
+      };
+    } catch (error) {
+      return this.logService.errorLog(error, 'getAllAdmins');
     }
+  }
 
-    async getUser(code: string) {
-        console.log(code);
+  async getUser(code: string) {
+    try {
+      const user = await this.adminRepo.findOne({
+        where: { code },
+        select: {
+          password: false,
+        },
+      });
 
-        try {
-            const user = await this.adminRepo.findOne({
-                where: { code }
-            });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
 
-            if (!user) {
-                throw new NotFoundException('User not found');
-            }
-
-            return {
-                status: 200,
-                message: 'User retrieved successfully',
-                data: user
-            };
-        } catch (error) {
-            throw new BadRequestException(error);
-        }
+      return {
+        status: 200,
+        message: 'Admin retrieved successfully',
+        data: user,
+      };
+    } catch (error) {
+      return this.logService.errorLog(error, 'getAdmin');
     }
+  }
 
-    async updateUser(code: string, body: Record<string, any>) {
-        try {
-            const user = await this.adminRepo.findOne({
-                where: { code }
-            });
-            console.log("user", user);
+  async updateAdmin(code: string, body: Record<string, any>) {
+    try {
+      const user = await this.adminRepo.findOne({
+        where: { code },
+      });
 
-            if (!user) {
-                throw new NotFoundException('User not found');
-            }
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
 
-            if ('current_password' in body && "new_password" in body) {
-                const isPasswordValid = await bcrypt.compare(body.current_password, user.password);
-                if (!isPasswordValid) {
-                    throw new BadRequestException('Current password is incorrect');
-                }
-
-                const saltValues = await bcrypt.genSalt();
-                const hashValue = await bcrypt.hash(body.new_password, saltValues);
-                body.password = hashValue;
-                delete body.current_password;
-                delete body.new_password;
-            }
-
-            await this.adminRepo.update({ code }, body);
-
-            return {
-                status: 200,
-                message: 'User updated successfully'
-            };
-        } catch (error) {
-            throw new BadRequestException(error);
+      if ('current_password' in body && 'new_password' in body) {
+        const isPasswordValid = await bcrypt.compare(
+          body.current_password,
+          user.password,
+        );
+        if (!isPasswordValid) {
+          throw new BadRequestException('Current password is incorrect');
         }
+
+        const saltValues = await bcrypt.genSalt();
+        body.password = await bcrypt.hash(body.new_password, saltValues);
+        delete body.current_password;
+        delete body.new_password;
+      }
+
+      await this.adminRepo.update({ code }, body);
+
+      return {
+        status: 200,
+        message: 'Admin updated successfully',
+      };
+    } catch (error) {
+      return this.logService.errorLog(error, 'updateAdmin');
     }
+  }
 }
