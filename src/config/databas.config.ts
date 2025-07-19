@@ -1,16 +1,18 @@
 import { env } from 'process';
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import * as dotenv from 'dotenv';
+dotenv.config()
 
-const dataBaseConfig: Record<string, any> = {
-  type: env.DATABASE_TYPE,
-  host: env.DATABASE_HOST,
-  port: parseInt(env.DATABASE_PORT || '2001', 10),
-  username: env.DATABSE_USERNAME,
-  password: env.DATABASE_PASSWORD,
-  database: env.DATABSE,
+export const dataBaseConfig: Record<string, any> = {
+  type: env.DB_TYPE,
+  host: env.DB_HOST,
+  port: parseInt(env.DB_PORT || '3306', 10),
+  username: env.DB_USERNAME,
+  password: env.DB_PASSWORD,
+  database: env.DB_DATABASE,
   synchronize: true,
-  entities: ['../../**/*.entity{.ts,.js}'],
-  migrations: ['src/migrations/*{.ts,.js}'],
+  entities: ['dist/**/**/entities/*.entity{.ts,.js}'],
+  migrations: ['dist/config/migrations/*{.ts,.js}'],
 };
 
-export const dataSource = new DataSource(dataBaseConfig);
+export const dataSource = new DataSource(dataBaseConfig as DataSourceOptions);
