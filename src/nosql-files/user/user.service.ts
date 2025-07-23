@@ -1,12 +1,17 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import { USER_CODE } from 'src/common/common.codes';
-import { CommonService } from 'src/common/common.service';
 import { Model } from 'mongoose';
-import { User } from '../schemas/user.schema';
+import { USER_CODE } from 'src/common/common.codes';
 import { ApiInterface } from 'src/common/common.interface';
+import { CommonService } from 'src/common/common.service';
 import { LogService } from 'src/common/services/logService';
+import { User } from '../schemas/user.schema';
 
 @Injectable()
 export class UserService {
@@ -21,22 +26,26 @@ export class UserService {
   ) {}
 
   //
-  async createUser(body: Record<string, any>):Promise<ApiInterface> {
-    console.log("body",body);
+  async createUser(body: Record<string, any>): Promise<ApiInterface> {
+    console.log('body', body);
     try {
-      const existingUser = await this.userRepo.findOne({ username: body.username });
+      const existingUser = await this.userRepo.findOne({
+        username: body.username,
+      });
 
       if (existingUser) {
         return this.logService.errorLog(
-          new BadRequestException('Record with this username or email already exists'),
-          'createUser'
+          new BadRequestException(
+            'Record with this username or email already exists',
+          ),
+          'createUser',
         );
       }
 
       if (body.password !== body.confirm_password) {
         return this.logService.errorLog(
           new BadRequestException('Password and confirm password do not match'),
-          'createUser'
+          'createUser',
         );
       }
 
@@ -58,21 +67,21 @@ export class UserService {
     }
   }
 
-  async getAllUsers():Promise<ApiInterface> {
+  async getAllUsers(): Promise<ApiInterface> {
     try {
       const users = await this.userRepo.find({}, { password: 0 }); // Exclude password field
 
       return {
         status: 200,
         message: 'Users retrieved successfully',
-        data: users
+        data: users,
       };
     } catch (error) {
       return this.logService.errorLog(error, 'getAllUsers');
     }
   }
 
-  async getUser(code: string):Promise<ApiInterface> {
+  async getUser(code: string): Promise<ApiInterface> {
     try {
       const user = await this.userRepo.findOne({ code }, { password: 0 }); // Exclude password
 
@@ -83,14 +92,17 @@ export class UserService {
       return {
         status: 200,
         message: 'User retrieved successfully',
-        data: user
+        data: user,
       };
     } catch (error) {
       return this.logService.errorLog(error, 'getUser');
     }
   }
 
-  async updateUser(code: string, body: Record<string, any>):Promise<ApiInterface> {
+  async updateUser(
+    code: string,
+    body: Record<string, any>,
+  ): Promise<ApiInterface> {
     try {
       const user = await this.userRepo.findOne({ code });
 
@@ -102,7 +114,7 @@ export class UserService {
       if ('current_password' in body && 'new_password' in body) {
         const isPasswordValid = await bcrypt.compare(
           body.current_password,
-          user.password
+          user.password,
         );
         if (!isPasswordValid) {
           throw new BadRequestException('Current password is incorrect');
@@ -120,7 +132,7 @@ export class UserService {
 
       return {
         status: 200,
-        message: 'User updated successfully'
+        message: 'User updated successfully',
       };
     } catch (error) {
       return this.logService.errorLog(error, 'getUser');
