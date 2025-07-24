@@ -14,7 +14,7 @@ export default () => ({
     retryAttempts: 3,
     retryDelay: 1000,
   },
-  RABBIT_MQ: `amqp://${env.RABBIT_MQ_USER}:${env.RABBIT_MQ_PASSWORD}@${env.RABBIT_MQ_HOST}:${env.RABBIT_MQ_PORT}/${env.RABBIT_MQ_VHOST}`,
+  RABBIT_MQ:`amqp://${env.RABBIT_MQ_USERNAME}:${env.RABBIT_MQ_PASSWORD}@${env.RABBIT_MQ_HOST}:${env.RABBIT_MQ_PORT}/${env.RABBIT_MQ_VHOST}`,
   REDIS_CONFIG: {
     socket: {
       url: env.REDIS_URL,
