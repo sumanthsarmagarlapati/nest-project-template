@@ -1,10 +1,10 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { Document } from "mongoose";
 
 @Schema({
-  timestamps: true,versionKey:false  // This will add createdAt and updatedAt automatically
+  timestamps: true,
+  versionKey: false, // This will add createdAt and updatedAt automatically
 })
-
 export class User extends Document {
   @Prop({ required: true, maxlength: 30 })
   first_name: string;

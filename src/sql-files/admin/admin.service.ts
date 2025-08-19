@@ -1,15 +1,11 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcryptjs';
-import { Repository } from 'typeorm';
-import { ADMIN_CODE } from '../../common/common.codes';
-import { CommonService } from '../../common/common.service';
-import { LogService } from '../../common/services/logService';
-import { Admin } from './entities/admin.entity';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import * as bcrypt from "bcryptjs";
+import { Repository } from "typeorm";
+import { ADMIN_CODE } from "../../common/common.codes";
+import { CommonService } from "../../common/common.service";
+import { LogService } from "../../common/services/logService";
+import { Admin } from "./entities/admin.entity";
 
 @Injectable()
 export class AdminService {
@@ -29,15 +25,15 @@ export class AdminService {
 
       if (existingUser) {
         return this.logService.errorLog(
-          new BadRequestException('Record with this username or email already exists'),
-          'createAdmin'
+          new BadRequestException("Record with this username or email already exists"),
+          "createAdmin",
         );
       }
 
       if (body.password !== body.confirm_password) {
         return this.logService.errorLog(
-          new BadRequestException('Password and confirm password do not match'),
-          'createAdmin'
+          new BadRequestException("Password and confirm password do not match"),
+          "createAdmin",
         );
       }
 
@@ -52,10 +48,10 @@ export class AdminService {
 
       return {
         status: 201,
-        message: 'Admin created successfully',
+        message: "Admin created successfully",
       };
     } catch (error) {
-      return this.logService.errorLog(error, 'createAdmin');
+      return this.logService.errorLog(error, "createAdmin");
     }
   }
 
@@ -69,11 +65,11 @@ export class AdminService {
 
       return {
         status: 200,
-        message: 'Admins retrieved successfully',
+        message: "Admins retrieved successfully",
         data: data,
       };
     } catch (error) {
-      return this.logService.errorLog(error, 'getAllAdmins');
+      return this.logService.errorLog(error, "getAllAdmins");
     }
   }
 
@@ -87,16 +83,16 @@ export class AdminService {
       });
 
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException("User not found");
       }
 
       return {
         status: 200,
-        message: 'Admin retrieved successfully',
+        message: "Admin retrieved successfully",
         data: user,
       };
     } catch (error) {
-      return this.logService.errorLog(error, 'getAdmin');
+      return this.logService.errorLog(error, "getAdmin");
     }
   }
 
@@ -107,16 +103,13 @@ export class AdminService {
       });
 
       if (!user) {
-        throw new NotFoundException('User not found');
+        throw new NotFoundException("User not found");
       }
 
-      if ('current_password' in body && 'new_password' in body) {
-        const isPasswordValid = await bcrypt.compare(
-          body.current_password,
-          user.password,
-        );
+      if ("current_password" in body && "new_password" in body) {
+        const isPasswordValid = await bcrypt.compare(body.current_password, user.password);
         if (!isPasswordValid) {
-          throw new BadRequestException('Current password is incorrect');
+          throw new BadRequestException("Current password is incorrect");
         }
 
         const saltValues = await bcrypt.genSalt();
@@ -129,10 +122,10 @@ export class AdminService {
 
       return {
         status: 200,
-        message: 'Admin updated successfully',
+        message: "Admin updated successfully",
       };
     } catch (error) {
-      return this.logService.errorLog(error, 'updateAdmin');
+      return this.logService.errorLog(error, "updateAdmin");
     }
   }
 }

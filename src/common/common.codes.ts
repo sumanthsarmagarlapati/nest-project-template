@@ -1,2 +1,2 @@
-export const USER_CODE='USR'
-export const ADMIN_CODE='ADM'
+export const USER_CODE = "USR";
+export const ADMIN_CODE = "ADM";
