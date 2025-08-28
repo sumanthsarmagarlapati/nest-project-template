@@ -3,7 +3,6 @@ import { InjectModel } from "@nestjs/mongoose";
 import * as bcrypt from "bcryptjs";
 import { Model } from "mongoose";
 import { USER_CODE } from "src/common/common.codes";
-import { ApiInterface } from "src/common/common.interface";
 import { CommonService } from "src/common/common.service";
 import { LogService } from "src/common/services/logService";
 import { User } from "../schemas/user.schema";
@@ -21,7 +20,7 @@ export class UserService {
   ) {}
 
   //
-  async createUser(body: Record<string, any>): Promise<ApiInterface> {
+  async createUser(body: Record<string, any>) {
     console.log("body", body);
     try {
       const existingUser = await this.userRepo.findOne({
@@ -60,7 +59,7 @@ export class UserService {
     }
   }
 
-  async getAllUsers(): Promise<ApiInterface> {
+  async getAllUsers() {
     try {
       const users = await this.userRepo.find({}, { password: 0 }); // Exclude password field
 
@@ -74,7 +73,7 @@ export class UserService {
     }
   }
 
-  async getUser(code: string): Promise<ApiInterface> {
+  async getUser(code: string) {
     try {
       const user = await this.userRepo.findOne({ code }, { password: 0 }); // Exclude password
 
@@ -92,7 +91,7 @@ export class UserService {
     }
   }
 
-  async updateUser(code: string, body: Record<string, any>): Promise<ApiInterface> {
+  async updateUser(code: string, body: Record<string, any>) {
     try {
       const user = await this.userRepo.findOne({ code });
 

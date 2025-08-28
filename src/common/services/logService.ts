@@ -24,7 +24,7 @@ export class LogService {
   }
 
   // Error logs with error handling
-  async errorLog(error: any, context: string): Promise<never> {
+  async errorLog(error: any, context: string, throwError?:boolean): Promise<void> {
     const message = error.message || "Unknown error";
     this.logger.error(`❌ Error in [${context}]: ${message}`, error.stack);
 
@@ -65,11 +65,12 @@ export class LogService {
       });
     }
 
-    // Default fallback
-    throw new InternalServerErrorException({
-      status: 500,
-      message,
-    });
+    if (throwError) {
+      throw new InternalServerErrorException({
+        status: 500,
+        message,
+      });
+    }
   }
 
   // Util to add context + metadata

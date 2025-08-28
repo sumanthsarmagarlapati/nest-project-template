@@ -31,7 +31,7 @@ export class RedisService implements OnModuleInit {
       });
     } catch (error) {
       this.retryRedisConnection();
-      await this.logService.errorLog(error, "Redis Connection Initialization");
+      await this.logService.errorLog(error, "Redis Connection Initialization", false);
     }
   }
 
