@@ -19,10 +19,10 @@ export default () => ({
   RABBIT_MQ_EXCHANGE: env.RABBIT_MQ_EXCHANGE || "testing_exchange",
   REDIS_CONFIG: {
     socket: {
-      url: env.REDIS_HOST || "redis://localhost",
+      host: env.REDIS_HOST || "redis",
       port: parseInt(env.REDIS_PORT || "6379", 10),
     },
     password: env.REDIS_PASSWORD,
-    db: parseInt(env.REDIS_DB || "0", 10),
+    database: parseInt(env.REDIS_DB || "0", 10), // redis v4 uses 'database' instead of 'db'
   },
 });
