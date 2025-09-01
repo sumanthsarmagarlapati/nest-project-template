@@ -8,7 +8,7 @@ import {
 
 @Injectable()
 export class LogService {
-  private readonly logger = new Logger("AppLogger");
+  private readonly logger = new Logger();
 
   // General logs
   async infoLog(message: string, context: string, meta?: any) {

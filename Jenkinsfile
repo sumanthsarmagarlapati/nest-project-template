@@ -21,7 +21,7 @@ pipeline {
         stage('Remove Docker Image') {
             steps {
                 script {
-                    sh "docker rmi -f ${IMAGE}:${TAG} || true"
+                    bat "docker rmi -f ${IMAGE}:${TAG} || echo Image not found"
                 }
             }
         }
@@ -29,7 +29,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${IMAGE}:${TAG} ."
+                    bat "docker build -t ${IMAGE}:${TAG} ."
                 }
             }
         }
@@ -37,7 +37,7 @@ pipeline {
         stage('Remove Container') {
             steps {
                 script {
-                    sh "docker rm -f ${CONTAINER_NAME} || true"
+                    bat "docker rm -f ${CONTAINER_NAME} || echo Container not found"
                 }
             }
         }
@@ -45,7 +45,7 @@ pipeline {
         stage('Run Container') {
             steps {
                 script {
-                    sh "docker run -d -p 3000:3000 --name ${CONTAINER_NAME} ${IMAGE}:${TAG}"
+                    bat "docker run -d -p 3000:3000 --name ${CONTAINER_NAME} ${IMAGE}:${TAG}"
                 }
             }
         }
