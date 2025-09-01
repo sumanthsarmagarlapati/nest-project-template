@@ -45,7 +45,7 @@ pipeline {
         stage('Run Container') {
             steps {
                 script {
-                    bat "docker run --env-file .env-prod -d -p 2001:2001 --name ${CONTAINER_NAME} ${IMAGE}:${TAG}"
+                    bat "docker run --env-file .env -d -p 2001:2001 --name ${CONTAINER_NAME} ${IMAGE}:${TAG}"
                 }
             }
         }
