@@ -9,4 +9,10 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "20010:2001"   # Map container port 3000 → host port 3000
+      - "2001:2001"   # Map container port 3000 → host port 3000
+    networks:
+      - "ci-network"
+      
+networks:
+  ci-network:
+    external: true
