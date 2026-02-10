@@ -29,4 +29,5 @@ export class AdminController {
     async updateUser( @Param() param: CommonCodeDto, @Body() body: UpdateAdminDto) {
         return this.adminService.updateAdmin( param.code, body);
     }
+    
 }
