@@ -1,41 +1,44 @@
+// eslint.config.mjs
 import eslint from "@eslint/js";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
-import globals from "globals";
+import prettierConfig from "eslint-config-prettier";
+import prettierPlugin from "eslint-plugin-prettier";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["eslint.config.mjs"],
+    ignores: ["**/dist/**", "**/node_modules/**", "eslint.config.mjs"],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommededTypeChecked,
-  eslintPluginPrettierRecommended,
+  ...tseslint.configs.recommended,
   {
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-        ...globals.jest,
-        ...globals.mocha,
-        ...globals.cypress,
-      },
-      parserOptions: {
-        ecmaVersion: 2020,
-        sourceType: "module",
-      },
+    plugins: {
+      prettier: prettierPlugin,
     },
-  },
-  {
     rules: {
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
-      "padding-line-between-statements": [
-        "error",
-        { blankLine: "always", prev: "function", next: "*" },
-      ],
-      "no-console": "warn",
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      // TypeScript & JS common rules
+      "no-console": ["warn", { allow: ["log", "warn"] }],
+      "no-unused-vars": "warn",
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-empty-function": "warn",
+      "@typescript-eslint/no-var-requires": "off",
+      "no-multiple-empty-lines": ["warn", { max: 3, maxEOF: 3, maxBOF: 3 }],
+
+      // Prettier config disables conflicting rules
+      ...prettierConfig.rules,
+      // "padding-lines-between-statements": [
+      //   "error",
+      //   { blankLine: "always", prev: "*", next: "return" }
+      // ],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      // Make Prettier formatting issues show as ESLint errors
+      "prettier/prettier": "warn",
     },
   },
 );

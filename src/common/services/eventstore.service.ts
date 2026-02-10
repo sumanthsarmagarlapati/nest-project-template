@@ -1,99 +1,132 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as amqp from 'amqplib';
-import { env } from 'process';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit, Scope } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as amqp from "amqplib";
+import { publishConfigInterface } from "../common.interface";
+import { LogService } from "./logService";
 
-@Injectable()
-export class EventStoreService implements OnModuleInit {
+@Injectable({ scope: Scope.DEFAULT })
+export class EventStoreService implements OnModuleInit, OnModuleDestroy {
   private publisherChannel: amqp.Channel;
   private consumerChannel: amqp.Channel;
   private isConnected = false;
-  constructor(private readonly configService: ConfigService) {}
 
-  onModuleInit() {
-    this.initService();
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logService: LogService,
+  ) {}
+
+  async onModuleInit() {
+    await this.initEventStoreService();
   }
 
-  async initService() {
+  async onModuleDestroy() {
+    if (this.publisherChannel) this.publisherChannel.close();
+    if (this.consumerChannel) this.consumerChannel.close();
+  }
+
+  async initEventStoreService() {
     try {
       this.isConnected = true;
-      const rabbitmqConfig = this.configService.getOrThrow('RABBIT_MQ');
+      const rabbitmqUrl = this.configService.getOrThrow("RABBIT_MQ");
+      const connection = await amqp.connect(rabbitmqUrl);
 
-      const connection: amqp.Connection = await amqp.connect(rabbitmqConfig);
-
-      connection.on('error', (err) => {
+      connection.on("error", async err => {
         this.isConnected = false;
-        console.error('RabbitMQ connection error:', err);
+        await this.logService.errorLog(err, "RabbitMQ Connection");
       });
 
       this.publisherChannel = await connection.createChannel();
-      connection.on('connect', () => {
-        console.log('RabbitMQ connection established Successful');
+      this.consumerChannel = await connection.createChannel();
+
+      this.publisherChannel.on("error", async err => {
+        await this.logService.errorLog(err, "Publisher Channel");
+      });
+      this.consumerChannel.on("error", async err => {
+        await this.logService.errorLog(err, "Consumer Channel");
       });
 
-      this.activateConsumer(env.RABBIT_MQ_CONSUMER);
+      await this.logService.infoLog(
+        "RabbitMQ connection established successfully",
+        "RabbitMQ Service",
+      );
+
+      const consumerQueue = this.configService.getOrThrow("RABBIT_MQ_QUEUE");
+      await this.activateConsumer(consumerQueue);
     } catch (error) {
       await this.retryConnection();
+      await this.logService.errorLog(error, "initEventStoreService");
     }
   }
 
   async retryConnection() {
     if (!this.isConnected) {
       setTimeout(async () => {
-        await this.initService();
-        console.log('Retrying RabbitMQ connection...');
+        await this.initEventStoreService();
+        await this.logService.infoLog("Retrying RabbitMQ connection...", "RabbitMQ Reconnect");
       }, 5000);
     }
   }
 
-  async activateConsumer(queue: string) {
+  async activateConsumer(queue: string): Promise<void> {
     try {
-      await this.consumerChannel.preFetch(5);
-      await this.consumerChannel.assertQueue(queue, { durable: true });
-      await this.consumerChannel.assertExchange(
-        env.EVENT_STAORE_EXCHANGE,
-        'fanout',
-        { durable: true },
-      );
-      await this.consumerChannel.bindQueue(
-        queue,
-        env.EVENT_STAORE_EXCHANGE,
-        '',
-      );
-      this.consumerChannel.consume(queue, (msg) => {
-        const mesage = JSON.parse(msg.content.toString());
-        console.log('Received message:', mesage);
+      const exchange = this.configService.getOrThrow("RABBIT_MQ_EXCHANGE");
+      await this.consumerChannel.prefetch(5);
+      await this.consumerChannel.assertQueue(queue, {
+        durable: true,
       });
-    } catch (error) {}
+
+      await this.consumerChannel.assertExchange(exchange, "fanout", {
+        durable: true,
+      });
+
+      await this.consumerChannel.bindQueue(queue, exchange, "");
+
+      await this.consumerChannel.consume(queue, async msg => {
+        if (msg) {
+          try {
+            const contentStr = msg.content.toString();
+            const message = JSON.parse(contentStr);
+
+            await this.logService.infoLog(
+              `Consumer received message from queue ${queue}:\n${JSON.stringify(message, null, 2)}`,
+              "RabbitMQ Consumer",
+            );
+
+            await this.consumerChannel.ack(msg);
+          } catch {
+            Logger.error(
+              new Error(`Invalid Cosumer Message Foramt as: ${msg.content.toString()}`),
+              "Consumer Message",
+            );
+            this.consumerChannel.nack(msg, false, false);
+          }
+        }
+      });
+
+      await this.logService.infoLog(`Consumer activated for queue: ${queue}`, "RabbitMQ Consumer");
+    } catch (error) {
+      await this.logService.errorLog(error, "activateConsumer");
+      await this.retryConnection();
+    }
   }
 
-  async publishMessage(
-    config: {
-      type: 'direct' | 'topic' | 'fanout' | 'headers';
-      key: string;
-      queue?: string;
-      exchange?: string;
-    },
-    message: any,
-  ) {
-    const messageBuffer = Buffer.from(JSON.stringify(message));
-    if (config.type === 'direct' && config?.queue) {
-      await this.publisherChannel.assertQueue(config.queue, { durable: true });
-      await this.publisherChannel.sendToQueue(config.queue, messageBuffer);
-    } else if (
-      (config.type == 'fanout' || config.type == 'topic') &&
-      config?.exchange
-    ) {
-      await this.publisherChannel.assertExchange(config.exchange, config.type);
-      await this.publisherChannel.publish(
-        config.exchange,
-        config.key,
-        messageBuffer,
-      );
-    } else if (config.type == 'topic' && config?.exchange) {
-    }
-    console.log('Published message:', message);
+  async publishMessage(config: publishConfigInterface, message: any) {
     try {
-    } catch (error) {}
+      const messageBuffer = Buffer.from(JSON.stringify(message));
+      if (config.type === "direct" && config?.queue) {
+        await this.publisherChannel.assertQueue(config.queue, { durable: true });
+        await this.publisherChannel.sendToQueue(config.queue, messageBuffer);
+      } else if ((config.type === "fanout" || config.type === "topic") && config?.exchange) {
+        await this.publisherChannel.assertExchange(config.exchange, config.type);
+        await this.publisherChannel.publish(config.exchange, config.key || "", messageBuffer);
+      }
+
+      await this.logService.infoLog(
+        `Message published to ${config.type === "direct" ? `queue: ${config.queue}` : `exchange: ${config.exchange}`} with payload:\n${JSON.stringify(message, null, 2)}`,
+        "RabbitMQ Publisher",
+      );
+    } catch (error) {
+      await this.logService.errorLog(error, "publishMessage");
+    }
   }
 }
